@@ -1,0 +1,26 @@
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+                    http://www.springframework.org/schema/security 
+                    http://www.springframework.org/schema/security/spring-security-3.1.xsd">
+
+	<http pattern="/webapp/LogonForm" security="none" />
+
+
+    <http auto-config="true">
+		<intercept-url pattern="/webapp/LogOn*"     access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<intercept-url pattern="/webapp/LogonForm*" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<intercept-url pattern="/webapp/LogOut*"    access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<intercept-url pattern="/webapp/**"         access="IS_AUTHENTICATED_ANONYMOUSLY, ROLE_USER" />
+
+		<form-login login-page="/webapp/LogonForm" authentication-failure-url="/webapp/LogonForm?code=1" login-processing-url="/webapp/LogOn" default-target-url="/webapp/cambio_fecha_contable.htm"/>
+		<logout logout-url="/webapp/LogOff" logout-success-url="/webapp/LogonForm?code=2" />
+	</http>
+
+	<authentication-manager>
+		<authentication-provider ref="ldapAuthProvider"/>
+  	</authentication-manager>
+	
+</beans:beans>

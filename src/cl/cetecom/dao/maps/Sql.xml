@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cl.cetecom.dao.SqlDAO" >
+
+<select id="getLoginUsuario" resultType="cl.cetecom.dto.UsuarioDTO" parameterType="java.util.HashMap" >
+	SELECT 
+		ID_USUARIO, LOGIN, CLAVE, NOMBRE, PATERNO, MATERNO, ID_TIPO_USUARIO
+	FROM
+		USUARIO
+	WHERE
+		LOGIN = '${login}'
+		AND CLAVE = '${clave}'	
+</select>
+
+<select id="getSecuenciaFalla" resultType="Integer" parameterType="java.util.HashMap" >
+	select sq_falla.nextval from dual	
+</select>
+
+<select id="addFormulario" resultSetType="FORWARD_ONLY" parameterType="java.util.HashMap" >
+	INSERT INTO FORMULARIO
+	VALUES (${seq_falla},
+			${idtipofalla},
+			'${numsala}', 
+			'${numpc}', 
+			'${desfalla}', 
+			${idusario},
+			6)				
+</select>
+
+<select id="getAllFormulario" resultType="cl.cetecom.dto.AllFormularioDTO" parameterType="java.util.HashMap" >
+	select    id_formul,
+		      NOM_FALLA,
+		      NUM_SALA,    
+		      NUM_PC,    
+		      DESC_FALLA , 
+		      (nombre || ' ' || paterno || ' ' || materno) AS nombre,
+		      nom_estado
+	from formulario fo  join usuario u on fo.id_usuario = u.id_usuario        
+	join tipo_falla tf on fo.id_tipo_falla = tf.id_tipo_falla 
+	join estado_falla ef on fo.id_estado = ef.id_estado
+	
+</select>
+
+<select id="getFormularioById" resultType="cl.cetecom.dto.AllFormularioDTO" parameterType="java.util.HashMap" >
+	select    id_formul,
+		      NOM_FALLA,
+		      NUM_SALA,    
+		      NUM_PC,    
+		      DESC_FALLA
+	from formulario fo        
+		join tipo_falla tf on fo.id_tipo_falla = tf.id_tipo_falla
+	WHERE
+	id_formul 	 = #{idform}
+</select>
+
+<select id="updateFormularioById" resultSetType="FORWARD_ONLY" parameterType="java.util.HashMap" >
+	UPDATE FORMULARIO
+	SET ID_ESTADO = #{idestado}       
+	WHERE
+	id_formul = #{idform}
+</select>
+
+<select id="getAllFormularioJefe" resultType="cl.cetecom.dto.AllFormularioDTO" parameterType="java.util.HashMap" >
+	select    id_formul,
+		      NOM_FALLA,
+		      NUM_SALA,    
+		      NUM_PC,    
+		      DESC_FALLA , 
+		      (nombre || ' ' || paterno || ' ' || materno) AS nombre,
+		      nom_estado
+	from formulario fo  join usuario u on fo.id_usuario = u.id_usuario        
+	join tipo_falla tf on fo.id_tipo_falla = tf.id_tipo_falla 
+	join estado_falla ef on fo.id_estado = ef.id_estado
+	
+</select>
+
+<select id="getSeqCreateUser" resultType="Integer" parameterType="java.util.HashMap" >
+	select sq_usuario.nextval from dual	
+</select>
+
+<select id="addCreateUser" resultSetType="FORWARD_ONLY" parameterType="java.util.HashMap" >
+	INSERT INTO USUARIO
+	VALUES (${sq_usuario},
+			'${login}', 
+			'${clave}', 
+			'${nombre}', 
+			'${paterno}',
+			'${materno}',
+			${id_tipo_usuario})				
+</select>
+
+<select id="getCantidadEstadistica" resultType="cl.cetecom.dto.EstadisticaDTO" parameterType="java.util.HashMap" >
+	select FORMULARIO.id_estado id_estado, count(FORMULARIO.id_estado) cantidad,  ESTADO_FALLA.NOM_ESTADO nombre
+	from FORMULARIO join ESTADO_FALLA on FORMULARIO.ID_ESTADO = ESTADO_FALLA.ID_ESTADO 
+	group by FORMULARIO.ID_ESTADO, ESTADO_FALLA.NOM_ESTADO
+</select>
+
+</mapper>

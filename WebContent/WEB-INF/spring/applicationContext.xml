@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+
+	<!-- Load properties with PlaceHolder -->
+	<context:property-placeholder location="WEB-INF/properties/*.properties" />
+
+	<context:annotation-config />
+	<context:component-scan annotation-config="true"  base-package="cl.cetecom.*" />
+		
+	<!-- ==========================  DEFICIONES DATASOURCE  ============================== -->
+	
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		<property name="driverClassName"	value="${jdbc.driverClassName}" />
+		<property name="url" 				value="${jdbc.url}" />
+		<property name="username" 			value="${jdbc.username}" />
+		<property name="password" 			value="${jdbc.password}" />
+	</bean>
+
+	
+<!-- DATASOURCE CON POOLING: Configuraciones BoneCP de acuerdo al tamaño
+		PARAMETERS                      SMALL (less 2 GB)      MEDIUM (between 2 GB - 10 GB)   LARGE (more than 10 GB)
+		idleConnectionTestPeriod=       5                   	2                       	1   
+		idleMaxAge=                     30                  	20                      	5                
+		maxConnectionsPerPartition=     20                  	20                      	30
+		minConnectionsPerPartition=     10                  	10                      	15
+		partitionCount=                 2                   	3                       	3             
+		acquireIncrement=               5                   	5                       	5           
+		statementsCacheSize=            100                 	100                     	100      
+		releaseHelperThreads=           3                   	3                       	3       
+	 -->
+	 <!-- 
+	<bean id="dataSource" class="com.jolbox.bonecp.BoneCPDataSource" destroy-method="close">
+	   <property name="driverClass" value="${jdbc.driverClassName}" />
+	   <property name="jdbcUrl" value="${jdbc.url}" />
+	   <property name="username" value="${jdbc.username}"/>
+	   <property name="password" value="${jdbc.password}"/>
+	   <property name="idleConnectionTestPeriod" value="5"/>
+	   <property name="idleMaxAge" value="30"/>
+	   <property name="maxConnectionsPerPartition" value="20"/>
+	   <property name="minConnectionsPerPartition" value="10"/>
+	   <property name="partitionCount" value="2"/>
+	   <property name="acquireIncrement" value="5"/>
+	   <property name="statementsCacheSize" value="100"/>
+	   <property name="releaseHelperThreads" value="3"/>
+	</bean>
+	 -->
+	<!--
+	<bean id="dataSource" destroy-method="close" class="org.apache.commons.dbcp.BasicDataSource">
+         <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+         <property name="url" value="jdbc:mysql://localhost:3306/cetecom"/>
+         <property name="username" value="root"/>
+         <property name="password" value="1234"/>
+    </bean> 
+	-->
+	
+	<!-- =====================  DEFICIONES TRANSACCIONES  ======================== -->
+	<bean id="txMgr" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>	
+	</bean>
+	
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!--<property name="mapperLocations" value="classpath*:cl/bbr/cyr/dao/mybatis/maps/sql-map-config.xml" />
+		 con la linea anterior se automatiza la lectura de los mappers;no se necesita la siguiente linea-->  
+		
+		<property name="configLocation" value="classpath:cl/cetecom/dao/maps/sql-map-config.xml"/> 
+		<property name="dataSource" ref="dataSource"/>  
+	</bean>
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+	 	<constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"/>
+    </bean>
+     
+	<!--
+		Transaction advice definition, based on method name patterns.
+		Defaults to PROPAGATION_REQUIRED for all methods whose name starts with
+		"insert" or "update", and to PROPAGATION_REQUIRED with read-only hint
+		for all other methods.
+	-->
+	<tx:advice id="txAdvice" transaction-manager="txMgr">
+		<tx:attributes>
+			<!-- Todos estos mC)todos son NO transaccionales -->
+			<tx:method name="get*" read-only="true"/>
+			<tx:method name="is*" read-only="true"/>
+			<tx:method name="select*" read-only="true"/>
+			<tx:method name="do*" read-only="true"/>
+			<!-- Los mC)todos restantes SI son transaccionales -->
+			<tx:method name="*" propagation="REQUIRES_NEW" rollback-for="java.lang.Exception"/>
+		</tx:attributes>
+	</tx:advice>
+	
+	<bean id="SqlDAO" class="org.mybatis.spring.mapper.MapperFactoryBean">
+	<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	<property name="mapperInterface" value="cl.cetecom.dao.SqlDAO"/>
+	</bean>
+	
+	
+	<bean id="sqlServiceBean" class="cl.cetecom.service.impl.SqlServiceImpl">
+  		<property name="dao_usuarios" 		ref="SqlDAO"/>
+  	</bean>	
+  
+  	  		  	
+</beans>
